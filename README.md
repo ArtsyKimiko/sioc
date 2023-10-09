@@ -1,3 +1,2 @@
-# sioc
+# SiOC
 Systemy i obrazy cyfrowe
-aaaasgdfhj
