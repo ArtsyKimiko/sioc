@@ -168,3 +168,49 @@ def interpolate_and_mse(N, filenames):
 
 for N in N_values:
     interpolate_and_mse(N,filenames)
+
+
+
+# Porównanie interpolacji o dużej liczbie punktów z z sekwencją interpolacji tworzących mniej punktów
+
+x = np.array([1, 2, 3, 4, 5])
+y = np.array([2, 3, 1, 4, 2])
+
+# Interpolation with a large number of points
+x_interp_large = np.linspace(min(x), max(x), 1000)
+interp_function_large = interp1d(x, y, kind='linear')
+y_interp_large = interp_function_large(x_interp_large)
+
+plt.plot(x, y, 'o', label='Input Data')
+plt.plot(x_interp_large, y_interp_large, label='Interpolation with Many Points')
+plt.legend()
+
+folder = os.path.dirname(os.path.abspath(__file__))
+filename_large = 'with_many_points.png'
+filepath_large = os.path.join(folder, filename_large)
+plt.savefig(filepath_large)
+plt.clf()
+
+
+num_steps = 4
+total_points = 2 * len(x)
+
+# Sequential interpolation
+x_interp_seq = np.linspace(min(x), max(x), len(x))
+y_interp_seq = y.copy()
+
+for _ in range(num_steps):
+    interp_function_seq = interp1d(x_interp_seq, y_interp_seq, kind='linear', fill_value="extrapolate")
+    x_interp_seq = np.linspace(min(x_interp_seq), max(x_interp_seq), total_points)
+    y_interp_seq = interp_function_seq(x_interp_seq)
+
+
+plt.plot(x, y, 'o', label='Input Data')
+plt.plot(x_interp_seq, y_interp_seq, label='Sequential Interpolation')
+plt.legend()
+
+folder = os.path.dirname(os.path.abspath(__file__))
+filename_seq = 'sequential.png'
+filepath_seq = os.path.join(folder, filename_seq)
+plt.savefig(filepath_seq)
+plt.clf()
