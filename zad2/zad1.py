@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.interpolate as scp
 from sklearn import metrics
+import os
 
 N = 100
 
@@ -16,7 +17,7 @@ def sin8x(x):
 
 method = 'linear'
 
-def interpolate_and_plot(x, y, method, filename):
+def interpolate(x, y, method, filename):
     interpolated_function = scp.interp1d(x, y, kind=method)
     x_int = np.linspace(x.min(), x.max(), N)
     y_int = interpolated_function(x_int)
@@ -28,7 +29,11 @@ def interpolate_and_plot(x, y, method, filename):
     plt.plot(x_int, y_int, 'r-', label='Interpolation')
     plt.grid(True)
     plt.legend()
-    plt.savefig(filename)
+
+    script_dir = os.path.dirname(__file__)
+    save_path = os.path.join(script_dir, filename)
+
+    plt.savefig(save_path)
     plt.clf()
     #plt.show()
 
@@ -42,7 +47,7 @@ filenames = ['sinx.png', 'sin1_x.png', 'sin8x.png']
 
 for func, filename in zip(functions, filenames):
     y_values = [func(alfa) for alfa in x]
-    interpolate_and_plot(x, y_values, 'linear', filename)
+    interpolate(x, y_values, 'linear', filename)
 
 
 def h1(x):
@@ -66,29 +71,32 @@ def h3(x):
 def h4(x):
     return (np.sin(x) / x)
 
-x = np.linspace(-5,5,300)
-_ = plt.figure(figsize=[10,5])
-y1 = []
-y2 = []
-y3 = []
-y4 = []
 
-for x0 in x:
-    y1.append(h1(x0))
-    y2.append(h2(x0))
-    y3.append(h3(x0))
-    y4.append(h4(x0))
-_ = plt.plot(x,y1)
+def h_functions(h, x, method, filename):
+    y = [h(x0) for x0 in x]
 
-for i, y in enumerate([y1, y2, y3], start=1):
+    _ = plt.figure(figsize=[10, 5])
+    _ = plt.plot(x, y)
+
     interpolated_function = scp.interp1d(x, y, kind=method)
     x_int = np.linspace(x.min(), x.max(), 10 * N)
     y_int = interpolated_function(x_int)
 
-    plt.plot(x, y, 'go', label=f'Orginal Points {i}')
-    plt.plot(x_int, y_int, 'r-', label=f'Interpolation {i}')
+    plt.plot(x, y, 'go', label='Orginal Points')
+    plt.plot(x_int, y_int, 'r-', label='Interpolation')
     plt.grid(True)
     plt.legend()
-    plt.savefig(f'h{i}.png')
+
+    script_dir = os.path.dirname(__file__)
+    save_path = os.path.join(script_dir, filename)
+
+    plt.savefig(save_path)
     plt.clf()
     #plt.show()
+
+x = np.linspace(-5, 5, 300)
+
+h_functions(h1, x, 'linear', 'h1.png')
+h_functions(h2, x, 'linear', 'h2.png')
+h_functions(h3, x, 'linear', 'h3.png')
+h_functions(h4, x, 'linear', 'h4.png')
