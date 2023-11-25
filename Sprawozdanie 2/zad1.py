@@ -160,7 +160,7 @@ def interpolate_and_mse(N, filenames):
     plt.plot(x_true, y_interp, 'r-', label='Interpolation')
     plt.grid(True)
     plt.legend()
-    plt.text(0.5, 1.05, f'MSE = {mse:.8f}', horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
+    plt.text(0.5, 1.05, f'MSE = {mse:.8f}', fontsize=25, horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
     
     script_dir = os.path.dirname(__file__)
     save_path = os.path.join(script_dir, filenames[N_values.index(N)])
