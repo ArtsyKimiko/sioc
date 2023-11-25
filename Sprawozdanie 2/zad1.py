@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.interpolate as scp
+from scipy.interpolate import interp1d
 from sklearn import metrics
 import os
 
-from scipy.interpolate import interp1d
-from sklearn import metrics
+
+
 
 N = 100
 
@@ -136,9 +137,9 @@ plt.show()
 #Sprawdzanie wpływu ilości punktów na wskaźnik MSE
 print('Sprawdzanie wpływu ilości punktów na wskaźnik MSE')
 
-N_values = [5, 10, 20, 30, 70]
+N_values = [5, 10, 20, 30, 70, 100]
 
-filenames = ['n5.png', 'n10.png', 'n20.png', 'n30.png', 'n70.png']
+filenames = ['n5.png', 'n10.png', 'n20.png', 'n30.png', 'n70.png', 'n100.png']
 
 def interpolate_and_mse(N, filenames):
     x = np.linspace(-np.pi, np.pi, N)
