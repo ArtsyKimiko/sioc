@@ -5,9 +5,6 @@ from scipy.interpolate import interp1d
 from sklearn import metrics
 import os
 
-
-
-
 N = 100
 
 def sin(x):
@@ -39,7 +36,7 @@ def interpolate(x, y, method, filename):
     plt.savefig(save_path)
     
     plt.clf()
-    #plt.show()
+    plt.show()
 
 x = np.linspace(-np.pi, np.pi, N)
 y = [sin(alfa) for alfa in x]
@@ -74,7 +71,6 @@ def h3(x):
 def h4(x):
     return (np.sin(x) / x)
 
-
 def h_functions(h, x, method, filename):
     y = [h(x0) for x0 in x]
 
@@ -95,7 +91,7 @@ def h_functions(h, x, method, filename):
     plt.savefig(save_path)
     
     plt.clf()
-    #plt.show()
+    plt.show()
 
 x = np.linspace(-5, 5, 300)
 
@@ -104,7 +100,7 @@ h_functions(h2, x, 'linear', 'h2.png')
 h_functions(h3, x, 'linear', 'h3.png')
 h_functions(h4, x, 'linear', 'h4.png')
 
-#Przypadek w którym funkcja interpolowana nie będzie ciągła / punkty nie będą równoodległe od siebie
+#A case where the interpolated function will not be continuous / points will not be equidistant
 N = 100
 x = np.linspace(-np.pi, np.pi, N)
 y = np.sin(x)
@@ -120,11 +116,8 @@ x_int = np.linspace(x.min(), x.max(), 10*N)
 y_int = interpolated_function(x_int)
 y_true = np.sin(x_int)
 
-
 mse = metrics.mean_squared_error(y_pred=y_int, y_true=y_true)
 
-print('MSE dla funkcji nieciągłej: ')
-print(mse)
 plt.plot(x, y, 'go', label='Original Points')
 plt.plot(x_int, y_int, 'r-', label='Interpolation')
 plt.plot(x_int, y_true, 'y--', label='True Function')
@@ -132,7 +125,6 @@ plt.grid(True)
 plt.legend()
 plt.text(0.5, 1.05, f'MSE = {mse:.8f}', fontsize=25, horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
     
-
 folder = os.path.dirname(os.path.abspath(__file__))
 filename = 'without_some_points.png'
 filepath = os.path.join(folder, filename)
@@ -140,9 +132,7 @@ plt.savefig(filepath)
 plt.clf()
 plt.show()
 
-#Sprawdzanie wpływu ilości punktów na wskaźnik MSE
-print('Sprawdzanie wpływu ilości punktów na wskaźnik MSE')
-
+#Examining the impact of the number of points on the MSE indicator
 N_values = [5, 10, 20, 30, 70, 100]
 
 filenames = ['n5.png', 'n10.png', 'n20.png', 'n30.png', 'n70.png', 'n100.png']
@@ -176,10 +166,7 @@ def interpolate_and_mse(N, filenames):
 for N in N_values:
     interpolate_and_mse(N,filenames)
 
-
-
-# Porównanie interpolacji o dużej liczbie punktów z z sekwencją interpolacji tworzących mniej punktów
-
+#Comparison of interpolation with a large number of points with a sequence of interpolations generating fewer points
 x = np.array([1, 2, 3, 4, 5])
 y = np.array([2, 3, 1, 4, 2])
 
