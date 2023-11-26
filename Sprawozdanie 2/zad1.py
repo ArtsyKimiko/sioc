@@ -120,12 +120,18 @@ x_int = np.linspace(x.min(), x.max(), 10*N)
 y_int = interpolated_function(x_int)
 y_true = np.sin(x_int)
 
-print(f"MSE: {metrics.mean_squared_error(y_pred=y_int, y_true=y_true):.8f}")
+
+mse = metrics.mean_squared_error(y_pred=y_int, y_true=y_true)
+
+print('MSE dla funkcji nieciągłej: ')
+print(mse)
 plt.plot(x, y, 'go', label='Original Points')
 plt.plot(x_int, y_int, 'r-', label='Interpolation')
 plt.plot(x_int, y_true, 'y--', label='True Function')
 plt.grid(True)
 plt.legend()
+plt.text(0.5, 1.05, f'MSE = {mse:.8f}', fontsize=25, horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
+    
 
 folder = os.path.dirname(os.path.abspath(__file__))
 filename = 'without_some_points.png'
