@@ -5,8 +5,8 @@ import os
 import matplotlib.pyplot as plt
 
 def calculate_mse(img1, img2):
-    img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0])) # Resize img2 to match the dimensions of img1
-    return np.square(np.subtract(img1, img2)).mean() # Calculate Mean Squared Error (MSE)
+    img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
+    return np.square(np.subtract(img1, img2)).mean()
 
 def resize_image(img, new_width=None, new_height=None, scale_factor=None, method='interpolation'):
     # Calculate new dimensions based on scale factor or provided width/height
@@ -43,22 +43,18 @@ def resize_image(img, new_width=None, new_height=None, scale_factor=None, method
 
                 if method == 'interpolation':
                     for c in range(channels):
-                        # Determine how to fill in the new pixel based on the relationship between source and target pixels:
+                        # Determine how to fill in the new pixel based on the relationship between source and target pixels
                         if (x_floor == x_ceil) and (y_floor == y_ceil):
-                            # If the source and target pixels are the same, no interpolation is needed
                             new_img[i, j, c] = img[x_floor, y_floor, c]
                         elif (x_ceil == x_floor):
-                            # If the source pixels are on the same row, interpolate along the y-axis.
                             q1 = img[int(x), int(y_floor), c]
                             q2 = img[int(x), int(y_ceil), c]
                             new_img[i, j, c] = q1 * (y_ceil - y) + q2 * (y - y_floor)
                         elif (y_ceil == y_floor):
-                            # If the source pixels are in the same column, interpolate along the x-axis.
                             q1 = img[x_floor, y_floor, c]
                             q2 = img[x_ceil, y_floor, c]
                             new_img[i, j, c] = q1 * (x_ceil - x) + q2 * (x - x_floor)
                         else:
-                            # For general cases, use bilinear interpolation with four surrounding pixels (v1, v2, v3, v4)
                             v1 = img[x_floor, y_floor, c]
                             v2 = img[x_ceil, y_floor, c]
                             v3 = img[x_floor, y_ceil, c]
@@ -74,8 +70,7 @@ def resize_image(img, new_width=None, new_height=None, scale_factor=None, method
                         return new_img.squeeze() if channels == 1 else new_img
 
     elif method == 'convolution':
-        # Convolution using a 3x3 averaging kernel
-        kernel = np.ones((3, 3), np.float32) / 9
+        kernel = np.ones((3, 3), np.float32) / 9 # Convolution using a 3x3 averaging kernel
         img_convolved = cv2.filter2D(img, -1, kernel)
         new_img = img_convolved[::2, ::2]
         return new_img
@@ -87,7 +82,6 @@ def run_tests(img, img_number):
     methods = ['interpolation', 'convolution', 'max_pooling']
     scale_factors = [0.5, 2]
 
-    # Iterate over methods and scale factors to create combined images
     for method in methods:
         for scale_factor in scale_factors:
             create_combined_image(img, scale_factor, method, img_number)
@@ -135,10 +129,9 @@ def create_combined_image(img, scale_factor, method, img_number):
     filepath = os.path.join(folder, filename)
     cv2.imwrite(filepath, combined_img)
 
-# Read input images
+
 img1 = cv2.imread("Input1_256x256.png")
 img2 = cv2.imread("Input2_640x635.jpg")
 
-# Run tests for both images
 run_tests(img1, 1)
 run_tests(img2, 2)
