@@ -67,7 +67,8 @@ def resize_image(img, new_width=None, new_height=None, scale_factor=None, method
                     for c in range(channels):
                         # Take the maximum value from the specified region in the original image
                         new_img[i, j, c] = np.max(img[x_floor:x_ceil + 1, y_floor:y_ceil + 1, c])
-                        return new_img.squeeze() if channels == 1 else new_img
+            
+        return new_img.squeeze() if channels == 1 else new_img
 
     elif method == 'convolution':
         kernel = np.ones((3, 3), np.float32) / 9 # Convolution using a 3x3 averaging kernel
