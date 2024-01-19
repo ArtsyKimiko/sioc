@@ -35,20 +35,7 @@ def demosaic_Bayer_interpolation(image,type="average"):
     height, width, c = image.shape
 
     red_channel, green_channel, blue_channel = np.zeros((height, width)), np.zeros((height, width)), np.zeros((height, width))
-
-    for i in range(height):
-        for j in range(width):
-            if i % 2 == 0:                              # wiersz nieparzysty
-                if j % 2 == 0:                          # kolumna nieparzysta
-                    green_channel[i,j] = image[i,j,1]
-                else:                                   # kolumna parzysta
-                    red_channel[i,j] = image[i,j,0] 
-            else:                                       # wiersz parzysty
-                if j % 2 == 0:                          # kolumna nieparzysta
-                    blue_channel[i,j] = image[i,j,2]
-                else:                                   # kolumna parzysta
-                    green_channel[i,j] = image[i,j,1]
-
+    
     # 1.  Interpolacja koloru czerwonego w wierszach nieparzystych
     for i in range(1,height,2):
         for j in range(1,width,2):
@@ -129,6 +116,21 @@ def demosaic_Bayer_interpolation(image,type="average"):
 
     result = np.dstack((red_channel,green_channel,blue_channel))
     return result                
+
+def mosaic_Bayer()
+    for i in range(height):
+        for j in range(width):
+            if i % 2 == 0:                              # wiersz nieparzysty
+                if j % 2 == 0:                          # kolumna nieparzysta
+                    green_channel[i,j] = image[i,j,1]
+                else:                                   # kolumna parzysta
+                    red_channel[i,j] = image[i,j,0] 
+            else:                                       # wiersz parzysty
+                if j % 2 == 0:                          # kolumna nieparzysta
+                    blue_channel[i,j] = image[i,j,2]
+                else:                                   # kolumna parzysta
+                    green_channel[i,j] = image[i,j,1]
+
 
 # Porównanie jakości demozaikowania metodą konwolucji 2D i interpolacji
 def Bayer_test():
