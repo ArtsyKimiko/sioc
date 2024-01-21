@@ -5,49 +5,34 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import convolve
 import os
 
-def show_images(images, titles, suptitle, rows, cols):
-    plt.figure(figsize=(12, 4))
-    for i in range(len(images)):
+def save_images(images, titles, suptitle, rows, cols, name, folder="output_images"):
+    num_images = len(images)
+    rows = min(rows, num_images)
+    cols = min(cols, num_images)
+    
+    fig = plt.figure(figsize=(cols*4, rows*4))
+    fig.suptitle(suptitle)
+    
+    for i in range(num_images):
         plt.subplot(rows, cols, i+1)
         plt.imshow(images[i], cmap='gray')
         plt.title(titles[i])
-        plt.suptitle(suptitle)
-    plt.show() 
+        
+    plt.tight_layout()
+    file_path = os.path.join(folder, f"{name}.png")
+    plt.savefig(file_path)
+    plt.close(fig)
 
 def calculate_mse(img1, img2):
     return np.square(np.subtract(img1, img2)).mean()
-
-# Demozaikowanie obrazów korzystając z konwolucji 2D dla filtru Bayera
-def demosaic_Bayer_convolution(image):
-    bayer_mask = np.array([[[1, 1], [1, 1]], [[1/2, 1/2], [1/2, 1/2]], [[1, 1], [1, 1]]])
-    
-    result_channels = []
-    
-    for i in range(3):
-        filtered_channel = cv2.filter2D(image[:, :, i], -1, bayer_mask[i])
-        result_channels.append(filtered_channel)
-    
-    result = np.dstack(result_channels)
-    return result
 
 # Demozaikowanie obrazów korzystając z interpolacji dla filtru Bayera
 def demosaic_Bayer_interpolation(image,type="average"):
     height, width, c = image.shape
 
-    red_channel, green_channel, blue_channel = np.zeros((height, width)), np.zeros((height, width)), np.zeros((height, width))
+    mosaiking = Mosaicing_Bayer(image)
 
-    for i in range(height):
-        for j in range(width):
-            if i % 2 == 0:                              # wiersz nieparzysty
-                if j % 2 == 0:                          # kolumna nieparzysta
-                    green_channel[i,j] = image[i,j,1]
-                else:                                   # kolumna parzysta
-                    red_channel[i,j] = image[i,j,0] 
-            else:                                       # wiersz parzysty
-                if j % 2 == 0:                          # kolumna nieparzysta
-                    blue_channel[i,j] = image[i,j,2]
-                else:                                   # kolumna parzysta
-                    green_channel[i,j] = image[i,j,1]
+    red_channel, green_channel, blue_channel = mosaiking[:,:,0], mosaiking[:,:,1], mosaiking[:,:,2]
 
     # 1.  Interpolacja koloru czerwonego w wierszach nieparzystych
     for i in range(1,height,2):
@@ -128,36 +113,42 @@ def demosaic_Bayer_interpolation(image,type="average"):
 
 
     result = np.dstack((red_channel,green_channel,blue_channel))
-    return result                
+    return result    
 
-# Porównanie jakości demozaikowania metodą konwolucji 2D i interpolacji
-def Bayer_test():
-    paths = [r"Bayer/circle.npy",r"Bayer/milky-way.npy",r"Bayer/mond.npy",r"Bayer/namib.npy",r"Bayer/pandas.npy"]
-    for path in paths:
-        image = np.load(path)
-        
-        image1 = demosaic_Bayer_interpolation(image, type="average")        
-        image2 = demosaic_Bayer_interpolation(image, type="max")
-        image3 = demosaic_Bayer_convolution(image)
-        
-        mse1 = round(calculate_mse(image,image1),5)
-        mse2 = round(calculate_mse(image,image2),5)
-        mse3 = round(calculate_mse(image,image3),5)
+# Demozaikowanie obrazów korzystając z konwolucji 2D dla filtru Bayera
+def demosaic_Bayer_convolution(image):
+    bayer_mask = np.array([[[1, 1], [1, 1]], [[1/2, 1/2], [1/2, 1/2]], [[1, 1], [1, 1]]])
+    
+    result = np.dstack([cv2.filter2D(image[:, :, i], -1, bayer_mask[i]) for i in range(3)])
+    return result
 
-        images = [image, image1, image2, image3]
-        titles = ["Oryginalny obraz", f"Interpolacja (average pooling) \n MSE: {mse1}", f"Interpolacja (max pooling) \n MSE: {mse2}", f"Konwolucja \n MSE: {mse3}"]
-        suptitle = f"Porównanie metod interpolacji z oryginalnym obrazem wykorzystując MSE."
-        show_images(images, titles, suptitle, 1, 4)
-        
-        plt.show()
-
-# Demozaikowanie obrazów dowolną metodą dla filtru Fuji
-def Fuji(image):
+# Demozaikowanie obrazów dowolną metodą dla filtru Fuji (konwolucja)
+def demosaic_Fuji_convolution(image):
     fuji_mask = np.array([[[1/8]*6]*6, [[1/20]*6]*6, [[1/8]*6]*6])
 
     result = np.dstack([cv2.filter2D(image[:, :, i], -1, fuji_mask[i]) for i in range(3)])
     return result
 
+# Mozaikowanie metodą Bayera
+def Mosaicing_Bayer(image):
+    height, width, c = image.shape
+    image = transform.resize(image, output_shape=(height,width,c))
+    
+    red = np.zeros((height,width), dtype=np.uint8)
+    red[::2, 1::2] = 1
+
+    green = np.zeros((height,width), dtype=np.uint8)
+    green[::2,::2] = 1
+    green[1::2, 1::2] = 1
+
+    blue = np.zeros((height,width), dtype=np.uint8)
+    blue[1::2,::2] = 1
+    
+    bayer = np.dstack((red,green,blue))
+
+    return bayer * image
+
+# Mozaikowanie metodą Fuji
 def Mosaicing_Fuji(image):
     pattern = np.array([[[0,0,1,0,0,1],[1,0,0,0,0,0],[0,0,0,1,0,0],[0,0,1,0,0,1],[1,0,0,0,0,0],[0,0,0,1,0,0]],
                         [[1,0,0,1,0,0],[0,1,1,0,1,1],[0,1,1,0,1,1],[1,0,0,1,0,0],[0,1,1,0,1,1],[0,1,1,0,1,1]],
@@ -170,39 +161,38 @@ def Mosaicing_Fuji(image):
 
     return Mask * image
 
-def Fuji_test():
+# Porównanie jakości demozaikowania metodą interpolacji i konwolucji 2D
+def Demosaic_test():
     paths = [r"Fuji/circle.npy",r"Fuji/milky-way.npy",r"Fuji/mond.npy",r"Fuji/namib.npy",r"Fuji/panda.npy"]
     for path in paths:
         image = np.load(path)
-        image1 = Mosaicing_Fuji(image)
-        final = Fuji(image1)
-        mse = round(calculate_mse(image,final),5)
         
-        images = [image1, final]
-        titles = ["Maska Fuji", "Zdemozaikowany obraz"]
-        suptitle = f"Demozaikowanie poprzez konwolucję. MSE: {mse}"
-        show_images(images, titles, suptitle, rows=1, cols=2)
-        
-        plt.show()
+        Bayer_image = Mosaicing_Bayer(image)
+        Fuji_image = Mosaicing_Fuji(image)
+
+        image1 = demosaic_Bayer_interpolation(Bayer_image, type="average")        
+        image2 = demosaic_Bayer_interpolation(Bayer_image, type="max")
+        image3 = demosaic_Bayer_convolution(Bayer_image)
+        image4 = demosaic_Fuji_convolution(Fuji_image)
+
+        mse1 = round(calculate_mse(image,image1),5)
+        mse2 = round(calculate_mse(image,image2),5)
+        mse3 = round(calculate_mse(image,image3),5)
+        mse4 = round(calculate_mse(image,image4),5)
+
+        images = [Bayer_image, image1, image2, Fuji_image, image3,  image4]
+        titles = ["Obraz z maską Bayera",  f"Interpolacja (average pooling) \n MSE: {mse1}", f"Interpolacja (max pooling) \n MSE: {mse2}", 
+                  "Obraz z maską Fuji", f"Konwolucja Bayera \n MSE: {mse3}",f"Konwolucja Fuji \n MSE: {mse4}"]
+        name = f"Demozaikowanie_{path.split('/')[-1].split('.')[0]}"
+        save_images(images, titles, "", 2, 3, name)
 
 
 # Zaimplementować 3 podane zastosowania konwolucji, każde za pomocą jednego filtru.
+# 1. Wykrywanie krawędzi:
 def Laplace(image):
     Laplace = np.array([[0,1,0], [1,-4,1], [0,1,0]])
 
     result = np.dstack([cv2.filter2D(image[:,:,i],-1,Laplace) for i in range(3)])
-    return result
-
-def Gaussian(image):
-    kernel = (1/16) * np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
-
-    result = np.dstack([cv2.filter2D(image[:,:,i],-1,kernel) for i in range(3)])
-    return result
-
-def Sharpen(image):
-    Sharp = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
-
-    result = np.dstack([cv2.filter2D(image[:,:,i],-1,Sharp) for i in range(3)])
     return result
 
 # BONUS: Zaimplementować detektor Sobela, złożony z sumy detekcji w osiach X oraz Y
@@ -215,24 +205,6 @@ def Sobel(image):
 
     result_XY = result_X + result_Y
     return result_XY
-
-def Average_Blurr(image,size):
-    filter = np.ones((size,size)) / size ** 2
-
-    result = np.dstack([cv2.filter2D(image[:,:,i],-1,filter) for i in range(3)])
-    return result
-
-# BONUS: Zaimplementować rozmycie Gaussowskie z większym rozmiarem jądra, 5 na 5 lub 7 na 7.
-def Gaussian_blur(image, kernel_size):
-    kernel = np.fromfunction(
-        lambda x, y: (1/(2*np.pi*(kernel_size/2)**2)) * np.exp(-((x-(kernel_size-1)/2)**2 + (y-(kernel_size-1)/2)**2) / (2.0*(kernel_size/2)**2)),
-        (kernel_size, kernel_size)
-    )
-
-    kernel = kernel / np.sum(kernel)
-
-    result = np.dstack([cv2.filter2D(image[:,:,i],-1,kernel) for i in range(3)])
-    return result
 
 # BONUS: Zaimplementować dodatkowe filtry krawędzi (operator Sobela-Feldmana, operator Scharra lub Operator Prewitta)
 def Scharr(image):
@@ -255,6 +227,38 @@ def Prewitt(image):
     result_XY = result_X + result_Y
     return result_XY
 
+# 2. Rozmycie:
+def Gaussian(image):
+    kernel = (1/16) * np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
+
+    result = np.dstack([cv2.filter2D(image[:,:,i],-1,kernel) for i in range(3)])
+    return result
+
+# BONUS: Zaimplementować rozmycie Gaussowskie z większym rozmiarem jądra, 5 na 5 lub 7 na 7.
+def Gaussian_blur(image, kernel_size):
+    kernel = np.fromfunction(
+        lambda x, y: (1/(2*np.pi*(kernel_size/2)**2)) * np.exp(-((x-(kernel_size-1)/2)**2 + (y-(kernel_size-1)/2)**2) / (2.0*(kernel_size/2)**2)),
+        (kernel_size, kernel_size)
+    )
+
+    kernel = kernel / np.sum(kernel)
+
+    result = np.dstack([cv2.filter2D(image[:,:,i],-1,kernel) for i in range(3)])
+    return result
+
+def Average_Blurr(image,size):
+    filter = np.ones((size,size)) / size ** 2
+
+    result = np.dstack([cv2.filter2D(image[:,:,i],-1,filter) for i in range(3)])
+    return result
+
+# 3. Wyostrzanie:
+def Sharpen(image):
+    Sharp = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
+
+    result = np.dstack([cv2.filter2D(image[:,:,i],-1,Sharp) for i in range(3)])
+    return result
+
 # BONUS: Zaimplementować dodatkowe filtry wyostrzające.
 def Unsharp_masking(image, kernel_size, strength=1.5):
     blurred = Gaussian_blur(image, kernel_size)
@@ -262,66 +266,60 @@ def Unsharp_masking(image, kernel_size, strength=1.5):
     result = image + strength * (image - blurred)
     return result
 
-# Wyświetlenie wyników i porównanie
-def Blurr_test():
-    paths = [r"Colors.jpg", r"Fuji/panda.npy", r"Fuji/circle.npy"]
-    for data in paths:
-        if data == r"Colors.jpg":
-            image = cv2.imread(data)
-        else:
-            image = np.load(data)
-        Gauss = Gaussian(image)
-        Gauss_5x5 = Gaussian_blur(image, 5)
-        Gauss_7x7 = Gaussian_blur(image, 7)
-        Blurr = Average_Blurr(image,10)
-
-        images1 = [image, Gauss, Blurr]
-        titles1 = ["Oryginalny obraz", "Rozmycie Gaussowskie 3x3", "Rozmycie uśredniające 10x10"]
-        show_images(images1, titles1, "", 1, 3)
-
-        images2 = [image, Gauss_5x5, Gauss_7x7]
-        titles2 = ["Oryginalny obraz", "Rozmycie Gaussowskie 5x5", "Rozmycie Gaussowskie 7x7"]
-        show_images(images2, titles2, "", 1, 3)
-
-        images2 = [Gauss, Blurr, Gauss_5x5, Gauss_7x7]
-        titles2 = ["Gaussowskie 3x3", "Uśredniające 10x10", "Gaussowskie 5x5", "Gaussowskie 7x7"]
-        show_images(images2, titles2, "Porównanie", 1, 4)
-
+# Porównanie metod wykrywania krawędzi
 def Detection_test():
     paths = [r"Colors.jpg", r"Fuji/panda.npy", r"Fuji/circle.npy"]
-    for data in paths:
-        if data == r"Colors.jpg":
-            image = cv2.imread(data)
+    for path in paths:
+        if path == r"Colors.jpg":
+            image = cv2.imread(path)
         else:
-            image = np.load(data)
+            image = np.load(path)
         
         Lap = Laplace(image)
         Sob = Sobel(image)
         Pre = Prewitt(image)
         Sch = Scharr(image)
 
-        images = [Lap, Sob, Pre, Sch]
-        titles = ["Operator Laplace'a", "Operator Sobela", "Operator Prewitta", "Operator Scharra"]
+        images = [image, Lap, Sob, Pre, Sch]
+        titles = ["Oryginalny obraz","Operator Laplace'a", "Operator Sobela", "Operator Prewitta", "Operator Scharra"]
+        name = f"Wykrywanie_krawędzi_{path.split('/')[-1].split('.')[0]}"
+        save_images(images, titles, "", 2, 3, name)
 
-        show_images(images, titles, "Filtry krawędzi", 1, 4)
+# Porównanie metod rozmywających
+def Blurr_test():
+    paths = [r"Colors.jpg", r"Fuji/panda.npy", r"Fuji/circle.npy"]
+    for path in paths:
+        if path == r"Colors.jpg":
+            image = cv2.imread(path)
+        else:
+            image = np.load(path)
 
+        Gauss = Gaussian(image)
+        Gauss_5x5 = Gaussian_blur(image, 5)
+        Gauss_7x7 = Gaussian_blur(image, 7)
+        Blurr = Average_Blurr(image,10)
+
+        images = [image, Gauss, Gauss_5x5, Gauss_7x7, Blurr]
+        titles = ["Oryginalny obraz", "Rozmycie Gaussowskie 3x3", "Rozmycie Gaussowskie 5x5", 
+                  "Rozmycie Gaussowskie 7x7", "Rozmycie uśredniające 10x10"]
+        name = f"Rozmywanie_{path.split('/')[-1].split('.')[0]}"
+        save_images(images, titles, "", 2, 3, name)
+
+# Porównanie metod wyostrzania
 def Sharpen_test():
     paths = [r"Fuji/panda.npy", r"Fuji/milky-way.npy", r"Fuji/circle.npy"]
-    for data in paths:
-        image = np.load(data)
+    for path in paths:
+        image = np.load(path)
 
         Sh = Sharpen(image)    
         Un = Unsharp_masking(image, 5)
 
         images = [image, Sh, Un]
-        titles = ["Orginalny obraz","Wykorzystując jądro","Wyostrzanie Odwrotne"]
+        titles = ["Orginalny obraz","Wykorzystując jądro","Wyostrzanie odwrotne"]
+        name = f"Wyotrzanie_{path.split('/')[-1].split('.')[0]}"
+        save_images(images, titles, "", 1, 3, name)
 
-        show_images(images, titles, "Filtry wyostrzające", 1, 3)
-
-
-Bayer_test()
-Fuji_test()
-
-Blurr_test()
+Demosaic_test()
 Detection_test()
+Blurr_test()
 Sharpen_test()
