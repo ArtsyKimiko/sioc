@@ -30,10 +30,15 @@ def calculate_mse(img1, img2):
 def demosaic_Bayer_interpolation(image,type="average"):
     height, width, c = image.shape
 
+<<<<<<< HEAD
     mosaiking = Mosaicing_Bayer(image)
 
     red_channel, green_channel, blue_channel = mosaiking[:,:,0], mosaiking[:,:,1], mosaiking[:,:,2]
 
+=======
+    red_channel, green_channel, blue_channel = np.zeros((height, width)), np.zeros((height, width)), np.zeros((height, width))
+    
+>>>>>>> e263a40e69e6e9db70a3d9dbcfcee3ed70774f24
     # 1.  Interpolacja koloru czerwonego w wierszach nieparzystych
     for i in range(1,height,2):
         for j in range(1,width,2):
@@ -115,12 +120,43 @@ def demosaic_Bayer_interpolation(image,type="average"):
     result = np.dstack((red_channel,green_channel,blue_channel))
     return result    
 
+<<<<<<< HEAD
 # Demozaikowanie obrazów korzystając z konwolucji 2D dla filtru Bayera
 def demosaic_Bayer_convolution(image):
     bayer_mask = np.array([[[1, 1], [1, 1]], [[1/2, 1/2], [1/2, 1/2]], [[1, 1], [1, 1]]])
     
     result = np.dstack([cv2.filter2D(image[:, :, i], -1, bayer_mask[i]) for i in range(3)])
     return result
+=======
+def mosaic_Bayer()
+    for i in range(height):
+        for j in range(width):
+            if i % 2 == 0:                              # wiersz nieparzysty
+                if j % 2 == 0:                          # kolumna nieparzysta
+                    green_channel[i,j] = image[i,j,1]
+                else:                                   # kolumna parzysta
+                    red_channel[i,j] = image[i,j,0] 
+            else:                                       # wiersz parzysty
+                if j % 2 == 0:                          # kolumna nieparzysta
+                    blue_channel[i,j] = image[i,j,2]
+                else:                                   # kolumna parzysta
+                    green_channel[i,j] = image[i,j,1]
+
+
+# Porównanie jakości demozaikowania metodą konwolucji 2D i interpolacji
+def Bayer_test():
+    paths = [r"Bayer/circle.npy",r"Bayer/milky-way.npy",r"Bayer/mond.npy",r"Bayer/namib.npy",r"Bayer/pandas.npy"]
+    for path in paths:
+        image = np.load(path)
+        
+        image1 = demosaic_Bayer_interpolation(image, type="average")        
+        image2 = demosaic_Bayer_interpolation(image, type="max")
+        image3 = demosaic_Bayer_convolution(image)
+        
+        mse1 = round(calculate_mse(image,image1),5)
+        mse2 = round(calculate_mse(image,image2),5)
+        mse3 = round(calculate_mse(image,image3),5)
+>>>>>>> e263a40e69e6e9db70a3d9dbcfcee3ed70774f24
 
 # Demozaikowanie obrazów dowolną metodą dla filtru Fuji (konwolucja)
 def demosaic_Fuji_convolution(image):
